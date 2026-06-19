@@ -13,6 +13,10 @@ type MonacoEditorProps = {
 
 export default function MonacoEditor({ code, language, fontSize, formatRequest, onChange }: MonacoEditorProps) {
   const codeMarkers = usePlaygroundStore((state) => state.codeMarkers);
+  const theme = usePlaygroundStore((state) => state.theme);
+  const tabSize = usePlaygroundStore((state) => state.tabSize);
+  const wordWrap = usePlaygroundStore((state) => state.wordWrap);
+  const minimap = usePlaygroundStore((state) => state.minimap);
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<any>(null);
@@ -44,7 +48,7 @@ export default function MonacoEditor({ code, language, fontSize, formatRequest, 
     <Editor
       height="520px"
       language={language}
-      theme="vs-dark"
+      theme={theme === "light" ? "vs" : "vs-dark"}
       value={code}
       onChange={(value) => onChange(value ?? "")}
       onMount={(editor, monaco) => {
@@ -53,8 +57,11 @@ export default function MonacoEditor({ code, language, fontSize, formatRequest, 
       }}
       options={{
         fontSize,
+        tabSize,
+        insertSpaces: true,
+        wordWrap: wordWrap ? "on" : "off",
         glyphMargin: true,
-        minimap: { enabled: false },
+        minimap: { enabled: minimap },
         padding: { top: 18 },
         smoothScrolling: true,
         scrollBeyondLastLine: false,

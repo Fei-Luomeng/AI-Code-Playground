@@ -37,6 +37,16 @@ button, input, textarea { font: inherit; }
   min-height: 100vh;
   padding: 18px;
 }
+.appShell.theme-light {
+  color: #162033;
+  background:
+    linear-gradient(rgba(73, 102, 170, .08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(73, 102, 170, .08) 1px, transparent 1px),
+    radial-gradient(circle at 18% 10%, rgba(0, 178, 214, .16), transparent 30%),
+    radial-gradient(circle at 86% 8%, rgba(139, 92, 246, .13), transparent 32%),
+    linear-gradient(135deg, #f7fbff 0%, #eef4ff 52%, #f9f7ff 100%);
+  background-size: 42px 42px, 42px 42px, auto, auto, auto;
+}
 .glass {
   border: 1px solid rgba(125, 160, 255, .18);
   border-radius: 8px;
@@ -45,6 +55,14 @@ button, input, textarea { font: inherit; }
   backdrop-filter: blur(22px);
   position: relative;
   overflow: hidden;
+}
+.theme-light .glass {
+  border-color: rgba(83, 105, 160, .22);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .84), rgba(244, 248, 255, .78));
+  box-shadow: 0 20px 60px rgba(69, 88, 130, .16), inset 0 1px 0 rgba(255, 255, 255, .82);
+}
+.theme-light .glass::before {
+  background: linear-gradient(120deg, rgba(255, 255, 255, .42), transparent 36%, transparent 68%, rgba(0, 153, 204, .07));
 }
 .glass::before {
   content: "";
@@ -81,6 +99,27 @@ button, input, textarea { font: inherit; }
 }
 .brand strong, .brand span { display: block; }
 .brand span, .muted { color: #8294bd; font-size: 12px; }
+.theme-light .brand span,
+.theme-light .muted,
+.theme-light .statCard span,
+.theme-light .questionTypes button,
+.theme-light .questionTypesHeader span,
+.theme-light .aiSummary span,
+.theme-light .summaryCard span,
+.theme-light .editorMeta,
+.theme-light .editorStatusBar {
+  color: #61708f;
+}
+.theme-light .shellHeader h1,
+.theme-light .questionTypesHeader strong,
+.theme-light .panelHeader h2,
+.theme-light .blockTitle h3,
+.theme-light .sectionTitle,
+.theme-light .settingRow strong,
+.theme-light .previewCard h3,
+.theme-light .apiCard h3 {
+  color: #162033;
+}
 nav { display: grid; gap: 8px; }
 .navItem {
   min-height: 46px;
@@ -105,6 +144,18 @@ nav { display: grid; gap: 8px; }
   border-color: rgba(0, 209, 255, .36);
   background: linear-gradient(90deg, rgba(0, 209, 255, .16), rgba(139, 92, 246, .2));
   box-shadow: 0 0 26px rgba(0, 209, 255, .18);
+}
+.theme-light .navItem {
+  color: #53617d;
+}
+.theme-light .navItem:hover {
+  color: #162033;
+  background: rgba(255, 255, 255, .58);
+}
+.theme-light .navItem.active {
+  color: #0f172a;
+  border-color: rgba(0, 155, 214, .34);
+  background: linear-gradient(90deg, rgba(0, 184, 224, .16), rgba(139, 92, 246, .13));
 }
 .sidebarCard {
   margin-top: auto;
@@ -188,6 +239,18 @@ nav { display: grid; gap: 8px; }
 .askInput.ant-input-affix-wrapper {
   border-color: rgba(125, 160, 255, .28);
   background: rgba(12, 18, 44, .78);
+}
+.theme-light .askInput.ant-input-affix-wrapper {
+  border-color: rgba(83, 105, 160, .22);
+  background: rgba(255, 255, 255, .76);
+}
+.theme-light .askInput .ant-input {
+  color: #162033 !important;
+}
+.theme-light .askInput .ant-input::placeholder,
+.theme-light .askInput .ant-input-prefix,
+.theme-light .askInput .ant-input-clear-icon {
+  color: #61708f !important;
 }
 .askInput.ant-input-affix-wrapper:focus,
 .askInput.ant-input-affix-wrapper-focused,
@@ -309,6 +372,16 @@ nav { display: grid; gap: 8px; }
   transition: border-color .18s ease, color .18s ease, background .18s ease;
   white-space: nowrap;
 }
+.theme-light .questionTypes button {
+  color: #27344d;
+  border-color: rgba(83, 105, 160, .2);
+  background: rgba(255, 255, 255, .6);
+}
+.theme-light .questionTypes button.active {
+  color: #0f172a;
+  border-color: rgba(0, 155, 214, .42);
+  background: rgba(0, 184, 224, .13);
+}
 .questionTypes button .anticon {
   font-size: 12px;
 }
@@ -373,6 +446,17 @@ nav { display: grid; gap: 8px; }
   cursor: pointer;
   transition: border-color .18s ease, background .18s ease, color .18s ease;
 }
+.theme-light .tab {
+  color: #53617d;
+  border-color: rgba(83, 105, 160, .18);
+  background: rgba(255, 255, 255, .62);
+}
+.theme-light .tab:hover,
+.theme-light .tab.active {
+  color: #162033;
+  border-color: rgba(0, 155, 214, .38);
+  background: rgba(0, 184, 224, .12);
+}
 .tab:hover {
   color: #f6fbff;
   border-color: rgba(125, 160, 255, .26);
@@ -398,6 +482,10 @@ nav { display: grid; gap: 8px; }
   color: #7f94bd;
   font-size: 12px;
   border-bottom: 1px solid rgba(125, 160, 255, .09);
+}
+.theme-light .editorMeta {
+  border-bottom-color: rgba(83, 105, 160, .16);
+  background: rgba(255, 255, 255, .38);
 }
 .editorPanel .monaco-editor,
 .editorPanel .monaco-editor-background,
@@ -446,6 +534,10 @@ nav { display: grid; gap: 8px; }
   font-size: 12px;
   border-top: 1px solid rgba(125, 160, 255, .1);
   background: rgba(4, 9, 22, .62);
+}
+.theme-light .editorStatusBar {
+  border-top-color: rgba(83, 105, 160, .16);
+  background: rgba(244, 248, 255, .78);
 }
 .pasteTextarea {
   margin-top: 12px;
@@ -832,7 +924,7 @@ nav { display: grid; gap: 8px; }
 .historyCard .cardActions { margin-top: auto; }
 .settingsLayout {
   display: grid;
-  grid-template-columns: minmax(560px, 760px) 320px;
+  grid-template-columns: minmax(600px, 780px) 340px;
   gap: 16px;
 }
 .settingsPage, .previewCard, .apiCard, .shortcutCard {
@@ -842,7 +934,7 @@ nav { display: grid; gap: 8px; }
   grid-row: span 3;
 }
 .settingRow {
-  min-height: 78px;
+  min-height: 74px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -862,6 +954,34 @@ nav { display: grid; gap: 8px; }
   font-size: 12px;
 }
 .settingSlider { width: 220px; }
+.settingRow .ant-segmented {
+  padding: 4px;
+  border-color: rgba(125, 160, 255, .2) !important;
+  background: rgba(8, 13, 30, .58) !important;
+}
+.settingRow .ant-segmented-item {
+  color: #b9c7e4 !important;
+  border-radius: 8px;
+}
+.settingRow .ant-segmented-item:hover,
+.settingRow .ant-segmented-item-selected {
+  color: #07111f !important;
+}
+.settingRow .ant-segmented-item-selected {
+  background: linear-gradient(135deg, #f8fbff, #dff7ff) !important;
+  box-shadow: 0 0 18px rgba(0, 209, 255, .18);
+}
+.theme-light .settingRow .ant-segmented {
+  border-color: rgba(83, 105, 160, .2) !important;
+  background: rgba(255, 255, 255, .62) !important;
+}
+.theme-light .settingRow .ant-segmented-item {
+  color: #61708f !important;
+}
+.theme-light .settingRow .ant-segmented-item:hover,
+.theme-light .settingRow .ant-segmented-item-selected {
+  color: #162033 !important;
+}
 .previewCard, .apiCard, .shortcutCard {
   align-self: start;
 }
@@ -885,6 +1005,20 @@ nav { display: grid; gap: 8px; }
   background: rgba(2, 6, 18, .48);
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 12px;
+}
+.theme-light .previewCode span,
+.theme-light .apiStatus {
+  color: #006b7f;
+  background: rgba(255, 255, 255, .68);
+}
+.modelTag {
+  border-color: rgba(0, 209, 255, .28);
+  color: #d8e6ff;
+  background: rgba(0, 209, 255, .1);
+}
+.theme-light .modelTag {
+  color: #006b7f;
+  background: rgba(0, 184, 224, .12);
 }
 .apiStatus {
   display: flex;
@@ -934,6 +1068,14 @@ nav { display: grid; gap: 8px; }
   border-color: rgba(125, 160, 255, .18) !important;
   background: rgba(255, 255, 255, .045) !important;
   color: #e6efff !important;
+}
+.theme-light .ant-btn,
+.theme-light .ant-select-selector,
+.theme-light .ant-input-affix-wrapper,
+.theme-light .ant-segmented {
+  border-color: rgba(83, 105, 160, .22) !important;
+  background: rgba(255, 255, 255, .62) !important;
+  color: #162033 !important;
 }
 .darkSelectDropdown {
   background: #10182d !important;

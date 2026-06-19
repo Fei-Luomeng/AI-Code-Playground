@@ -3,8 +3,9 @@ import { questionTypes } from "../data/mockData";
 import type { AISummaryItem, AnalysisBlock, CodeMarker } from "../types/analysis";
 
 export type Language = "javascript" | "typescript" | "html";
-export type ModelName = "GLM-4.7-Flash" | "DeepSeek";
+export type ModelName = "GLM-4.7-Flash";
 export type AIStatus = "idle" | "loading" | "success" | "error";
+export type ThemeMode = "dark" | "light";
 
 export type ProjectFile = {
   name: string;
@@ -20,8 +21,11 @@ type PlaygroundState = {
   language: Language;
   output: string[];
   model: ModelName;
+  theme: ThemeMode;
   fontSize: number;
-  autoRun: boolean;
+  tabSize: number;
+  wordWrap: boolean;
+  minimap: boolean;
   animation: boolean;
   aiStatus: AIStatus;
   aiError: string;
@@ -34,9 +38,11 @@ type PlaygroundState = {
   setCode: (code: string) => void;
   setLanguage: (language: Language) => void;
   setOutput: (output: string[]) => void;
-  setModel: (model: ModelName) => void;
+  setTheme: (theme: ThemeMode) => void;
   setFontSize: (fontSize: number) => void;
-  setAutoRun: (autoRun: boolean) => void;
+  setTabSize: (tabSize: number) => void;
+  setWordWrap: (wordWrap: boolean) => void;
+  setMinimap: (minimap: boolean) => void;
   setAnimation: (animation: boolean) => void;
   setAIStatus: (status: AIStatus) => void;
   setAIError: (error: string) => void;
@@ -73,8 +79,11 @@ export const usePlaygroundStore = create<PlaygroundState>((set) => ({
   language: "javascript",
   output: ["待执行。点击“解释代码”运行当前代码片段。"],
   model: "GLM-4.7-Flash",
+  theme: "dark",
   fontSize: 14,
-  autoRun: false,
+  tabSize: 2,
+  wordWrap: false,
+  minimap: false,
   animation: true,
   aiStatus: "idle",
   aiError: "",
@@ -112,9 +121,11 @@ export const usePlaygroundStore = create<PlaygroundState>((set) => ({
       projectFiles: state.projectFiles.map((file) => (file.name === state.activeFile ? { ...file, language } : file)),
     })),
   setOutput: (output) => set({ output }),
-  setModel: (model) => set({ model }),
+  setTheme: (theme) => set({ theme }),
   setFontSize: (fontSize) => set({ fontSize }),
-  setAutoRun: (autoRun) => set({ autoRun }),
+  setTabSize: (tabSize) => set({ tabSize }),
+  setWordWrap: (wordWrap) => set({ wordWrap }),
+  setMinimap: (minimap) => set({ minimap }),
   setAnimation: (animation) => set({ animation }),
   setAIStatus: (aiStatus) => set({ aiStatus }),
   setAIError: (aiError) => set({ aiError }),

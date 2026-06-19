@@ -5,7 +5,7 @@ import { usePlaygroundStore } from "../store/playgroundStore";
 import { iconMap } from "./icons";
 
 export function AIInsightPanel() {
-  const { model, aiBlocks, aiSummary, aiStatus, aiError } = usePlaygroundStore();
+  const { model, aiBlocks, aiSummary, aiStatus, aiError, animation } = usePlaygroundStore();
 
   return (
     <aside className="aiPanel glass">
@@ -35,9 +35,9 @@ export function AIInsightPanel() {
           <motion.article
             key={block.title}
             className="analysisBlock"
-            initial={{ opacity: 0, y: 14 }}
+            initial={animation ? { opacity: 0, y: 14 } : false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.08 }}
+            transition={{ delay: animation ? index * 0.08 : 0, duration: animation ? 0.3 : 0 }}
           >
             <div className="blockTitle">
               <h3>

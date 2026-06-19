@@ -8,17 +8,46 @@ export function getWorkspaceStats(code: string, runtimeMs: number | null): Works
   const lines = code.split("\n").map((line) => line.trim()).filter(Boolean);
   const microTaskCount = countMatches(code, [/\.then\s*\(/g, /queueMicrotask\s*\(/g, /await\s+/g, /MutationObserver/g]);
   const macroTaskCount = countMatches(code, [/setTimeout\s*\(/g, /setInterval\s*\(/g, /requestAnimationFrame\s*\(/g, /requestIdleCallback\s*\(/g]);
-  const asyncLines = lines.filter((line) => /Promise|\.then\s*\(|await\s+|setTimeout\s*\(|setInterval\s*\(/.test(line)).length;
-  const syncCount = Math.max(lines.length - asyncLines, 0);
+  const functionCount = countMatches(code, [
+    /function\s+\w+\s*\(/g,
+    /(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\([^)]*\)\s*=>/g,
+    /(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\w+\s*=>/g,
+  ]);
+  const feature = getCodeFeature(code, microTaskCount, macroTaskCount);
+  const complexity = getCodeComplexity(code, lines.length, functionCount, microTaskCount + macroTaskCount);
 
   return [
     { label: "执行耗时", value: runtimeMs === null ? "--" : `${runtimeMs}ms`, tone: "cyan" },
-    { label: "同步行", value: String(syncCount), tone: "violet" },
-    { label: "微任务", value: String(microTaskCount), tone: "green" },
-    { label: "宏任务", value: String(macroTaskCount), tone: "amber" },
+    { label: "代码行数", value: String(lines.length), tone: "violet" },
+    { label: "复杂度", value: complexity, tone: "green" },
+    { label: "代码特征", value: feature, tone: "amber" },
   ];
 }
 
 function countMatches(input: string, patterns: RegExp[]) {
   return patterns.reduce((total, pattern) => total + [...input.matchAll(pattern)].length, 0);
+}
+
+function getCodeFeature(code: string, microTaskCount: number, macroTaskCount: number) {
+  const hasNetwork = /\b(fetch|axios)\s*\(/.test(code);
+  const hasDom = /\b(document|window)\./.test(code);
+  const hasAsync = microTaskCount > 0 || macroTaskCount > 0 || /\basync\s+function\b|\bawait\s+/.test(code);
+
+  if (hasNetwork) return "网络请求";
+  if (microTaskCount > 0 && macroTaskCount > 0) return "异步混合";
+  if (microTaskCount > 0) return "Promise";
+  if (macroTaskCount > 0) return "定时器";
+  if (hasAsync) return "异步函数";
+  if (hasDom) return "DOM 操作";
+  return "同步代码";
+}
+
+function getCodeComplexity(code: string, lineCount: number, functionCount: number, asyncTaskCount: number) {
+  const branchCount = countMatches(code, [/\bif\s*\(/g, /\belse\b/g, /\bswitch\s*\(/g, /\bcase\b/g, /\?.+:/g]);
+  const loopCount = countMatches(code, [/\bfor\s*\(/g, /\bwhile\s*\(/g, /\.forEach\s*\(/g, /\.map\s*\(/g, /\.reduce\s*\(/g]);
+  const score = branchCount + loopCount + functionCount + asyncTaskCount + Math.floor(lineCount / 12);
+
+  if (score >= 7) return "较复杂";
+  if (score >= 3) return "中等";
+  return "简单";
 }

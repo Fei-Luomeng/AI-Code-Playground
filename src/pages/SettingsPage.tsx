@@ -1,10 +1,24 @@
 import { SettingOutlined } from "@ant-design/icons";
-import { Segmented, Select, Slider, Switch } from "antd";
-import { ModelName, usePlaygroundStore } from "../store/playgroundStore";
+import { Segmented, Slider, Switch, Tag } from "antd";
+import { ThemeMode, usePlaygroundStore } from "../store/playgroundStore";
 import { ShellHeader } from "../components/ShellHeader";
 
 export function SettingsPage() {
-  const { model, fontSize, autoRun, animation, setModel, setFontSize, setAutoRun, setAnimation } = usePlaygroundStore();
+  const {
+    model,
+    theme,
+    fontSize,
+    tabSize,
+    wordWrap,
+    minimap,
+    animation,
+    setTheme,
+    setFontSize,
+    setTabSize,
+    setWordWrap,
+    setMinimap,
+    setAnimation,
+  } = usePlaygroundStore();
   const apiConfigured = Boolean(import.meta.env.VITE_GLM_API_KEY);
 
   return (
@@ -14,85 +28,102 @@ export function SettingsPage() {
         <div className="settingsPage glass">
           <div className="sectionTitle">
             <SettingOutlined />
-            Preferences
+            设置
           </div>
           <div className="settingRow">
             <div>
               <strong>主题</strong>
-              <span>Dark / Light 外观切换</span>
+              <span>切换整体背景、卡片、文字和代码编辑器主题</span>
             </div>
-            <Segmented options={["Dark", "Light"]} defaultValue="Dark" />
-          </div>
-          <div className="settingRow">
-            <div>
-              <strong>字体大小</strong>
-              <span>Monaco Editor font size</span>
-            </div>
-            <Slider min={12} max={20} value={fontSize} onChange={setFontSize} className="settingSlider" />
-          </div>
-          <div className="settingRow">
-            <div>
-              <strong>AI 模型</strong>
-              <span>代码解释会直连本地环境变量配置的 API</span>
-            </div>
-            <Select
-              value={model}
-              onChange={(value: ModelName) => setModel(value)}
+            <Segmented
+              value={theme}
+              onChange={(value) => setTheme(value as ThemeMode)}
               options={[
-                { value: "GLM-4.7-Flash", label: "GLM-4.7-Flash" },
-                { value: "DeepSeek", label: "DeepSeek" },
+                { label: "深色", value: "dark" },
+                { label: "浅色", value: "light" },
               ]}
             />
           </div>
           <div className="settingRow">
             <div>
-              <strong>自动运行</strong>
-              <span>代码变更后自动刷新输出</span>
+              <strong>字体大小</strong>
+              <span>只影响中间代码编辑器的字号，当前 {fontSize}px</span>
             </div>
-            <Switch checked={autoRun} onChange={setAutoRun} />
+            <Slider min={12} max={20} value={fontSize} onChange={setFontSize} className="settingSlider" />
+          </div>
+          <div className="settingRow">
+            <div>
+              <strong>Tab 空格</strong>
+              <span>控制格式化和缩进宽度，当前 {tabSize} 个空格</span>
+            </div>
+            <Segmented
+              value={tabSize}
+              onChange={(value) => setTabSize(Number(value))}
+              options={[
+                { label: "2", value: 2 },
+                { label: "4", value: 4 },
+              ]}
+            />
+          </div>
+          <div className="settingRow">
+            <div>
+              <strong>自动换行</strong>
+              <span>长代码行会在编辑器宽度内折行，减少横向滚动</span>
+            </div>
+            <Switch checked={wordWrap} onChange={setWordWrap} />
+          </div>
+          <div className="settingRow">
+            <div>
+              <strong>代码小地图</strong>
+              <span>在编辑器右侧显示代码缩略图，适合浏览长文件</span>
+            </div>
+            <Switch checked={minimap} onChange={setMinimap} />
+          </div>
+          <div className="settingRow">
+            <div>
+              <strong>AI 模型</strong>
+              <span>当前解释、标记和建议都会使用这个模型生成</span>
+            </div>
+            <Tag className="modelTag">{model}</Tag>
           </div>
           <div className="settingRow">
             <div>
               <strong>动画效果</strong>
-              <span>控制 Framer Motion 与流程高亮</span>
+              <span>控制 AI 解释卡片的入场动效</span>
             </div>
             <Switch checked={animation} onChange={setAnimation} />
           </div>
-          <div className="settingRow">
-            <div>
-              <strong>历史存储</strong>
-              <span>localStorage / IndexedDB 静态占位</span>
-            </div>
-            <Switch defaultChecked />
-          </div>
         </div>
         <div className="previewCard glass">
-          <span className="eyebrow">Preview</span>
-          <h3>Neon Cyber Theme</h3>
-          <p>玻璃拟态卡片、霓虹蓝紫高光、低亮度网格背景，以及面向开发者的高密度工作台布局。</p>
+          <span className="eyebrow">当前效果</span>
+          <h3>代码编辑体验</h3>
+          <p>主题和字号会立即作用到工作台；深色偏沉浸，浅色更适合白天阅读代码。</p>
           <div className="previewCode">
-            <span>theme.dark = true</span>
-            <span>model = "{model}"</span>
-            <span>sandbox = "iframe"</span>
+            <span>主题：{theme === "dark" ? "深色霓虹" : "浅色清爽"}</span>
+            <span>编辑器字号：{fontSize}px</span>
+            <span>缩进：{tabSize} 个空格</span>
+            <span>自动换行：{wordWrap ? "开启" : "关闭"}</span>
+            <span>代码小地图：{minimap ? "开启" : "关闭"}</span>
+            <span>运行环境：iframe 沙箱</span>
           </div>
         </div>
         <div className="apiCard glass">
           <span className="eyebrow">API</span>
           <h3>GLM-4.7-Flash</h3>
-          <p>代码编辑页会使用 .env.local 中的 VITE_GLM_API_KEY 请求 GLM，生成解释、标记和建议。</p>
+          <p>点击“解释代码”后，会先运行代码拿到控制台输出，再把源码、输出和解释重点一起发送给 GLM。</p>
           <div className="apiStatus">
-            <span>Endpoint</span>
-            <strong>{apiConfigured ? "Configured" : "Not connected"}</strong>
+            <span>API Key</span>
+            <strong>{apiConfigured ? "已配置" : "未配置"}</strong>
           </div>
         </div>
         <div className="shortcutCard glass">
-          <span className="eyebrow">Shortcuts</span>
+          <span className="eyebrow">快捷操作</span>
           <div className="shortcutList">
-            <span>Run</span>
+            <span>解释代码</span>
             <kbd>⌘ Enter</kbd>
-            <span>Format</span>
+            <span>格式化</span>
             <kbd>⌥ ⇧ F</kbd>
-            <span>AI Explain</span>
+            <span>补充问题</span>
             <kbd>⌘ I</kbd>
           </div>
         </div>
