@@ -51,6 +51,7 @@ type PlaygroundState = {
   setLastRunMs: (lastRunMs: number | null) => void;
   setCustomQuestion: (customQuestion: string) => void;
   addUserFile: (file: ProjectFile) => void;
+  removeUserFile: (fileName: string) => void;
   lastRunMs: number | null;
 };
 
@@ -150,6 +151,28 @@ export const usePlaygroundStore = create<PlaygroundState>((set) => ({
         aiStatus: "idle",
         lastRunMs: null,
         output: [`Loaded ${file.name}`],
+      };
+    }),
+  removeUserFile: (fileName) =>
+    set((state) => {
+      const file = state.projectFiles.find((item) => item.name === fileName);
+      if (!file || file.source === "builtin") return state;
+
+      const nextFiles = state.projectFiles.filter((item) => item.name !== fileName);
+      const fallbackFile = nextFiles.find((item) => item.name === state.activeFile) ?? nextFiles[0] ?? projectFiles[0];
+
+      return {
+        projectFiles: nextFiles.length ? nextFiles : projectFiles,
+        activeFile: fallbackFile.name,
+        code: fallbackFile.content,
+        language: fallbackFile.language,
+        aiBlocks: [],
+        aiSummary: [],
+        codeMarkers: [],
+        aiError: "",
+        aiStatus: "idle",
+        lastRunMs: null,
+        output: [`已删除 ${fileName}`],
       };
     }),
   toggleQuestionType: (type) =>

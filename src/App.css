@@ -457,6 +457,13 @@ nav { display: grid; gap: 8px; }
   border-color: rgba(0, 155, 214, .38);
   background: rgba(0, 184, 224, .12);
 }
+.tab.uploaded {
+  border-color: rgba(168, 255, 203, .2);
+}
+.tab.uploaded.active {
+  border-color: rgba(168, 255, 203, .42);
+  background: rgba(168, 255, 203, .1);
+}
 .tab:hover {
   color: #f6fbff;
   border-color: rgba(125, 160, 255, .26);
@@ -472,6 +479,60 @@ nav { display: grid; gap: 8px; }
   border-radius: 99px;
   background: #00d1ff;
   box-shadow: 0 0 12px #00d1ff;
+}
+.tab.uploaded .dot {
+  background: #a8ffcb;
+  box-shadow: 0 0 12px rgba(168, 255, 203, .8);
+}
+.fileKind {
+  color: #39d8ff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.tab.uploaded .fileKind {
+  color: #a8ffcb;
+}
+.fileName {
+  max-width: 128px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.deleteFileButton {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 6px;
+  color: #8294bd;
+  font-size: 10px;
+  opacity: .68;
+  transition: color .18s ease, background .18s ease, opacity .18s ease;
+}
+.deleteFileButton:hover {
+  color: #fff;
+  background: rgba(255, 86, 126, .22);
+  opacity: 1;
+}
+.theme-light .tab.uploaded {
+  border-color: rgba(0, 132, 92, .2);
+}
+.theme-light .tab.uploaded.active {
+  border-color: rgba(0, 132, 92, .36);
+  background: rgba(0, 132, 92, .1);
+}
+.theme-light .fileKind {
+  color: #007ca0;
+}
+.theme-light .tab.uploaded .fileKind {
+  color: #00845c;
+}
+.theme-light .deleteFileButton {
+  color: #61708f;
+}
+.theme-light .deleteFileButton:hover {
+  color: #9f1239;
+  background: rgba(255, 86, 126, .14);
 }
 .editorMeta {
   height: 30px;
@@ -538,10 +599,6 @@ nav { display: grid; gap: 8px; }
 .theme-light .editorStatusBar {
   border-top-color: rgba(83, 105, 160, .16);
   background: rgba(244, 248, 255, .78);
-}
-.pasteTextarea {
-  margin-top: 12px;
-  font-family: "SFMono-Regular", Consolas, monospace;
 }
 .aiPanel {
   grid-row: span 2;
@@ -762,30 +819,74 @@ nav { display: grid; gap: 8px; }
   border-radius: 8px;
   background: rgba(4, 9, 22, .62);
 }
-.react-flow__node {
+.theme-light .visualBoard .react-flow {
+  background: rgba(255, 255, 255, .58);
+}
+.visualBoard .react-flow__node {
   min-width: 132px;
+  white-space: pre-line;
   color: #e6efff;
   border-color: rgba(0, 209, 255, .5);
   background: rgba(18, 27, 56, .96);
   box-shadow: 0 0 24px rgba(0, 209, 255, .2);
   border-radius: 8px;
   font-weight: 700;
+  text-align: center;
+  line-height: 1.45;
+}
+.visualBoard .react-flow__node.flowNode.micro {
+  border-color: rgba(168, 255, 203, .52);
+}
+.visualBoard .react-flow__node.flowNode.macro {
+  border-color: rgba(255, 209, 102, .56);
+}
+.visualBoard .react-flow__node.flowNode.function {
+  border-color: rgba(185, 156, 255, .6);
+}
+.visualBoard .react-flow__node.flowNode.call {
+  border-color: rgba(0, 209, 255, .68);
+  box-shadow: 0 0 28px rgba(0, 209, 255, .28);
+}
+.visualBoard .react-flow__node.flowNode.branch,
+.visualBoard .react-flow__node.flowNode.return {
+  border-color: rgba(255, 138, 76, .58);
+}
+.visualBoard .react-flow__node.flowNode.output {
+  border-color: rgba(57, 216, 255, .58);
+}
+.visualBoard .react-flow__node.flowNode.browser {
+  border-color: rgba(185, 156, 255, .56);
+}
+.visualBoard .react-flow__node.flowNode.dom,
+.visualBoard .react-flow__node.flowNode.network {
+  border-color: rgba(185, 156, 255, .56);
+}
+.theme-light .visualBoard .react-flow__node {
+  color: #162033;
+  border-color: rgba(0, 155, 214, .42);
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 14px 30px rgba(69, 88, 130, .16);
 }
 .react-flow__edge-path {
   stroke: #39d8ff;
   stroke-width: 2;
 }
 .inspector {
-  display: grid;
-  align-content: start;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 520px;
+  overflow: auto;
 }
 .stepRow {
-  min-height: 72px;
   display: grid;
-  align-content: center;
-  gap: 7px;
-  padding: 12px;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 5px;
+  flex: 0 0 auto;
+  min-height: 94px;
+  padding: 12px 14px;
   border: 1px solid rgba(122, 150, 210, .15);
   border-radius: 8px;
   background: rgba(255, 255, 255, .035);
@@ -796,8 +897,44 @@ nav { display: grid; gap: 8px; }
   background: rgba(255, 255, 255, .055);
 }
 .stepRow span {
+  grid-row: 1 / span 2;
   color: #39d8ff;
   font-family: monospace;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+.stepRow strong {
+  grid-column: 2;
+  display: block;
+  color: #f6fbff;
+  font-size: 15px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.stepRow p {
+  grid-column: 2;
+  margin: 0;
+  color: #9fb1d5;
+  line-height: 1.5;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.stepRow.active {
+  background: rgba(0, 209, 255, .08);
+  box-shadow: inset 0 0 20px rgba(0, 209, 255, .08);
+}
+.theme-light .stepRow {
+  background: rgba(255, 255, 255, .55);
+}
+.theme-light .stepRow strong {
+  color: #162033;
+}
+.theme-light .stepRow p {
+  color: #61708f;
+}
+.theme-light .stepRow.active {
+  background: rgba(0, 184, 224, .1);
 }
 .timelineChart {
   grid-column: 1;
@@ -807,7 +944,9 @@ nav { display: grid; gap: 8px; }
   grid-column: 2;
   grid-row: 2 / span 2;
   display: grid;
+  align-content: start;
   gap: 12px;
+  overflow: auto;
 }
 .queueCard {
   padding: 13px;
@@ -825,7 +964,11 @@ nav { display: grid; gap: 8px; }
 }
 .queueItems span {
   min-height: 32px;
+  max-height: 96px;
+  overflow: auto;
   padding: 7px 9px;
+  white-space: pre-line;
+  line-height: 1.45;
   color: #9fb1d5;
   border-radius: 8px;
   background: rgba(2, 6, 18, .42);
@@ -837,6 +980,17 @@ nav { display: grid; gap: 8px; }
   outline: 1px solid rgba(0, 209, 255, .34);
   box-shadow: inset 0 0 16px rgba(0, 209, 255, .08);
 }
+.theme-light .queueCard,
+.theme-light .traceItem {
+  background: rgba(255, 255, 255, .55);
+}
+.theme-light .queueItems span {
+  color: #53617d;
+  background: rgba(255, 255, 255, .72);
+}
+.theme-light .queueItems span.active {
+  color: #00845c;
+}
 .tracePanel {
   grid-column: 1;
 }
@@ -846,7 +1000,7 @@ nav { display: grid; gap: 8px; }
   gap: 10px;
 }
 .traceItem {
-  min-height: 132px;
+  min-height: 112px;
   padding: 14px;
   display: grid;
   align-content: center;
@@ -861,6 +1015,10 @@ nav { display: grid; gap: 8px; }
 }
 .traceItem strong {
   color: #d8e6ff;
+  overflow-wrap: anywhere;
+}
+.theme-light .traceItem strong {
+  color: #162033;
 }
 .traceItem.active {
   border-color: rgba(0, 209, 255, .44);
@@ -1091,14 +1249,28 @@ nav { display: grid; gap: 8px; }
   background: rgba(0, 209, 255, .13) !important;
   color: #fff !important;
 }
-.darkModal .ant-modal-content,
-.darkModal .ant-modal-header {
-  border: 1px solid rgba(125, 160, 255, .18);
-  background: #10182d !important;
-  color: #e6efff;
+.deleteFileConfirm .ant-popover-inner {
+  border: 1px solid rgba(125, 160, 255, .22);
+  background: #10182d;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .42);
 }
-.darkModal .ant-modal-title {
-  color: #e6efff !important;
+.deleteFileConfirm .ant-popover-arrow::before {
+  background: #10182d;
+}
+.deleteFileConfirm .ant-popconfirm-title {
+  color: #f6fbff !important;
+}
+.deleteFileConfirm .ant-popconfirm-description {
+  color: #9fb1d5 !important;
+}
+.deleteFileConfirm .ant-btn-default {
+  color: #d8e6ff !important;
+  border-color: rgba(125, 160, 255, .22) !important;
+  background: rgba(255, 255, 255, .06) !important;
+}
+.deleteFileConfirm .ant-btn-primary {
+  background: linear-gradient(135deg, #ff567e, #ff8a4c) !important;
+  box-shadow: 0 0 18px rgba(255, 86, 126, .28) !important;
 }
 .ant-btn-primary {
   border: 0 !important;

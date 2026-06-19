@@ -1,5 +1,5 @@
-import { FileTextOutlined, FormatPainterOutlined, PlayCircleOutlined, UploadOutlined } from "@ant-design/icons";
-import { Button, Input, Modal, Select } from "antd";
+import { CloseOutlined, FormatPainterOutlined, PlayCircleOutlined, UploadOutlined } from "@ant-design/icons";
+import { Button, Popconfirm, Select } from "antd";
 import { lazy, Suspense, useRef, useState } from "react";
 import { Language, ProjectFile, usePlaygroundStore } from "../store/playgroundStore";
 
@@ -11,11 +11,9 @@ type EditorPanelProps = {
 };
 
 export function EditorPanel({ running, onRun }: EditorPanelProps) {
-  const { projectFiles, activeFile, code, language, fontSize, setActiveFile, setCode, setLanguage, addUserFile } = usePlaygroundStore();
+  const { projectFiles, activeFile, code, language, fontSize, setActiveFile, setCode, setLanguage, addUserFile, removeUserFile } =
+    usePlaygroundStore();
   const [formatRequest, setFormatRequest] = useState(0);
-  const [pasteOpen, setPasteOpen] = useState(false);
-  const [pasteName, setPasteName] = useState("user-code.js");
-  const [pasteCode, setPasteCode] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeProjectFile = projectFiles.find((file) => file.name === activeFile);
 
@@ -29,26 +27,43 @@ export function EditorPanel({ running, onRun }: EditorPanelProps) {
     });
   };
 
-  const handleCreateFromPaste = () => {
-    if (!pasteCode.trim()) return;
-    addUserFile({
-      name: pasteName.trim() || "user-code.js",
-      language: getLanguageFromFileName(pasteName),
-      source: "user",
-      content: pasteCode,
-    });
-    setPasteOpen(false);
-    setPasteCode("");
-  };
-
   return (
     <section className="editorPanel glass">
       <div className="toolbar">
         <div className="tabs" role="tablist">
           {projectFiles.map((file) => (
-            <button key={file.name} className={file.name === activeFile ? "tab active" : "tab"} onClick={() => setActiveFile(file.name)}>
+            <button
+              key={file.name}
+              className={`${file.name === activeFile ? "tab active" : "tab"} ${file.source === "user" ? "uploaded" : "builtin"}`}
+              onClick={() => setActiveFile(file.name)}
+            >
               <span className="dot" />
-              {file.name}
+              <span className="fileKind">{file.source === "builtin" ? "示例" : "上传"}</span>
+              <span className="fileName">{file.name}</span>
+              {file.source === "user" && (
+                <Popconfirm
+                  title="删除这个文件？"
+                  description={`删除 ${file.name} 后，需要重新上传才能恢复。`}
+                  okText="删除"
+                  cancelText="取消"
+                  placement="bottom"
+                  overlayClassName="deleteFileConfirm"
+                  onConfirm={(event) => {
+                    event?.stopPropagation();
+                    removeUserFile(file.name);
+                  }}
+                  onCancel={(event) => event?.stopPropagation()}
+                >
+                  <span
+                    className="deleteFileButton"
+                    role="button"
+                    aria-label={`删除 ${file.name}`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <CloseOutlined />
+                  </span>
+                </Popconfirm>
+              )}
             </button>
           ))}
         </div>
@@ -78,9 +93,6 @@ export function EditorPanel({ running, onRun }: EditorPanelProps) {
           <Button icon={<UploadOutlined />} onClick={() => fileInputRef.current?.click()}>
             上传
           </Button>
-          <Button icon={<FileTextOutlined />} onClick={() => setPasteOpen(true)}>
-            粘贴
-          </Button>
           <Button icon={<FormatPainterOutlined />} onClick={() => setFormatRequest((value) => value + 1)}>
             Format
           </Button>
@@ -91,7 +103,7 @@ export function EditorPanel({ running, onRun }: EditorPanelProps) {
       </div>
       <div className="editorMeta">
         <span>{activeFile}</span>
-        <span>{activeProjectFile?.source === "builtin" ? "内置示例" : "用户代码"}</span>
+        <span>{activeProjectFile?.source === "builtin" ? "示例文件" : "上传文件"}</span>
         <span>暂无错误</span>
         <span>JavaScript ES2024</span>
         <span>沙箱运行</span>
@@ -105,24 +117,6 @@ export function EditorPanel({ running, onRun }: EditorPanelProps) {
         <span>UTF-8</span>
         <span>{language}</span>
       </div>
-      <Modal
-        title="粘贴代码"
-        open={pasteOpen}
-        onOk={handleCreateFromPaste}
-        onCancel={() => setPasteOpen(false)}
-        okText="创建文件"
-        cancelText="取消"
-        className="darkModal"
-      >
-        <Input value={pasteName} onChange={(event) => setPasteName(event.target.value)} placeholder="文件名，例如 solution.js" />
-        <Input.TextArea
-          className="pasteTextarea"
-          value={pasteCode}
-          onChange={(event) => setPasteCode(event.target.value)}
-          placeholder="把需要解释的代码粘贴到这里"
-          autoSize={{ minRows: 10, maxRows: 16 }}
-        />
-      </Modal>
     </section>
   );
 }
