@@ -9,6 +9,7 @@ const titleMap: Record<PageMode, string> = {
   settings: "偏好设置",
 };
 
+// ReactNode 表示任意可渲染内容，因此每个页面都能传入不同的右侧操作按钮。
 export function ShellHeader({ mode, actions }: { mode: PageMode; actions?: ReactNode }) {
   return (
     <header className="shellHeader">

@@ -30,6 +30,7 @@ button, input, textarea { font: inherit; }
   border-radius: 8px;
   background: rgba(125, 160, 255, .32);
 }
+/* 应用外壳与全局主题 */
 .appShell {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
@@ -72,6 +73,7 @@ button, input, textarea { font: inherit; }
   background: linear-gradient(120deg, rgba(255, 255, 255, .08), transparent 32%, transparent 68%, rgba(0, 209, 255, .035));
   opacity: .72;
 }
+/* 左侧导航 */
 .sidebar {
   position: sticky;
   top: 18px;
@@ -145,8 +147,27 @@ nav { display: grid; gap: 8px; }
   background: linear-gradient(90deg, rgba(0, 209, 255, .16), rgba(139, 92, 246, .2));
   box-shadow: 0 0 26px rgba(0, 209, 255, .18);
 }
+.navItem.locked {
+  color: #687898;
+  cursor: not-allowed;
+}
+.navItem.locked:hover {
+  color: #7f8dab;
+  border-color: transparent;
+  background: transparent;
+  transform: none;
+}
+.navLock {
+  margin-left: auto;
+  font-size: 12px;
+}
 .theme-light .navItem {
   color: #53617d;
+}
+.theme-light .navItem.locked,
+.theme-light .navItem.locked:hover {
+  color: #9ba8be;
+  background: transparent;
 }
 .theme-light .navItem:hover {
   color: #162033;
@@ -395,6 +416,7 @@ nav { display: grid; gap: 8px; }
   background: rgba(0, 209, 255, .13);
   box-shadow: 0 0 18px rgba(0, 209, 255, .14);
 }
+/* 代码编辑工作台 */
 .workspace {
   display: grid;
   grid-template-columns: minmax(620px, 1fr) 380px;
@@ -802,6 +824,7 @@ nav { display: grid; gap: 8px; }
   line-height: 1.45;
   font-size: 12px;
 }
+/* 可视化页面 */
 .visualGrid {
   display: grid;
   grid-template-columns: minmax(720px, 1fr) 330px;
@@ -861,11 +884,40 @@ nav { display: grid; gap: 8px; }
 .visualBoard .react-flow__node.flowNode.network {
   border-color: rgba(185, 156, 255, .56);
 }
+.visualBoard .react-flow__node.flowNodeActive {
+  border-color: #39e6ff;
+  background: rgba(15, 43, 72, .96);
+  box-shadow: 0 0 26px rgba(57, 230, 255, .42), inset 0 0 18px rgba(57, 230, 255, .1);
+}
 .theme-light .visualBoard .react-flow__node {
   color: #162033;
   border-color: rgba(0, 155, 214, .42);
   background: rgba(255, 255, 255, .92);
   box-shadow: 0 14px 30px rgba(69, 88, 130, .16);
+}
+.theme-light .visualBoard .react-flow__node.flowNodeActive {
+  border-color: #00a7cf;
+  background: #eefcff;
+  box-shadow: 0 10px 28px rgba(0, 167, 207, .22);
+}
+.visualRunStatus {
+  margin-left: auto;
+  padding: 3px 7px;
+  border: 1px solid rgba(255, 209, 102, .22);
+  border-radius: 8px;
+  color: #ffd166;
+  font-size: 11px;
+  font-weight: 600;
+}
+.visualRunStatus.success {
+  color: #8fffc2;
+  border-color: rgba(143, 255, 194, .25);
+  background: rgba(143, 255, 194, .06);
+}
+.visualRunStatus.changed {
+  color: #ff91a9;
+  border-color: rgba(255, 86, 126, .3);
+  background: rgba(255, 86, 126, .07);
 }
 .react-flow__edge-path {
   stroke: #39d8ff;
@@ -896,7 +948,7 @@ nav { display: grid; gap: 8px; }
   transform: translateY(-2px);
   background: rgba(255, 255, 255, .055);
 }
-.stepRow span {
+.stepRow .stepIndex {
   grid-row: 1 / span 2;
   color: #39d8ff;
   font-family: monospace;
@@ -904,16 +956,20 @@ nav { display: grid; gap: 8px; }
   font-weight: 800;
   line-height: 1.35;
 }
-.stepRow strong {
+.stepContent {
   grid-column: 2;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.stepContent strong {
   display: block;
   color: #f6fbff;
   font-size: 15px;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
-.stepRow p {
-  grid-column: 2;
+.stepContent p {
   margin: 0;
   color: #9fb1d5;
   line-height: 1.5;
@@ -927,10 +983,10 @@ nav { display: grid; gap: 8px; }
 .theme-light .stepRow {
   background: rgba(255, 255, 255, .55);
 }
-.theme-light .stepRow strong {
+.theme-light .stepContent strong {
   color: #162033;
 }
-.theme-light .stepRow p {
+.theme-light .stepContent p {
   color: #61708f;
 }
 .theme-light .stepRow.active {
@@ -1025,6 +1081,7 @@ nav { display: grid; gap: 8px; }
   background: linear-gradient(180deg, rgba(0, 209, 255, .12), rgba(139, 92, 246, .08));
   box-shadow: 0 0 22px rgba(0, 209, 255, .12);
 }
+/* 历史记录页面 */
 .historySummary {
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));
@@ -1048,11 +1105,11 @@ nav { display: grid; gap: 8px; }
 }
 .historyGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(260px, 1fr));
   gap: 16px;
 }
 .historyCard {
-  min-height: 280px;
+  min-height: 390px;
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -1064,7 +1121,13 @@ nav { display: grid; gap: 8px; }
   justify-content: space-between;
 }
 .star { color: #ffd166; }
-.historyCard h3 { margin: 10px 0 12px; }
+.historyCard h3 {
+  margin: 10px 0 12px;
+  color: #f3f7ff;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.theme-light .historyCard h3 { color: #162033; }
 .historyCard pre {
   white-space: pre-wrap;
   margin: 0 0 14px;
@@ -1079,7 +1142,160 @@ nav { display: grid; gap: 8px; }
   color: #b9c7e4;
   line-height: 1.65;
 }
+.theme-light .historyCard p { color: #536482; }
 .historyCard .cardActions { margin-top: auto; }
+.historyCodePreview {
+  height: 130px;
+  overflow: hidden;
+  border: 1px solid rgba(125, 160, 255, .1);
+}
+.historyActions {
+  display: grid;
+  grid-template-columns: minmax(126px, 1fr) auto auto;
+  width: 100%;
+}
+.historyDeleteButton.ant-btn {
+  color: #ff91a9 !important;
+  border-color: rgba(255, 86, 126, .28) !important;
+  background: rgba(255, 86, 126, .06) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+}
+.historyDeleteButton.ant-btn:hover,
+.historyDeleteButton.ant-btn:focus {
+  color: #ffb0c1 !important;
+  border-color: rgba(255, 86, 126, .58) !important;
+  background: rgba(255, 86, 126, .13) !important;
+  box-shadow: 0 0 16px rgba(255, 86, 126, .12) !important;
+}
+.historyDeleteButton.ant-btn::after { display: none !important; }
+.historyClearButton.ant-btn {
+  height: 38px;
+  padding-inline: 14px;
+}
+.theme-light .historyDeleteButton.ant-btn {
+  color: #c93357 !important;
+  border-color: rgba(201, 51, 87, .25) !important;
+  background: rgba(201, 51, 87, .05) !important;
+}
+.historyIconButton {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: #8294bd;
+  background: transparent;
+  cursor: pointer;
+  transition: color .18s ease, background .18s ease;
+}
+.historyIconButton:hover,
+.historyIconButton.active {
+  color: #ffd166;
+  background: rgba(255, 209, 102, .1);
+}
+.historyTop .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.historySuccess { color: #8fffc2 !important; }
+.historyError { color: #ff91a9 !important; }
+.historyState {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #9fb1d5;
+}
+.historyDetailModal .ant-modal-content {
+  border: 1px solid rgba(125, 160, 255, .2);
+  background: #10182d;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .52);
+}
+.historyDetailModal .ant-modal-header {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(125, 160, 255, .14);
+  background: transparent;
+}
+.historyDetailModal .ant-modal-title,
+.historyDetailModal .ant-modal-close {
+  color: #f3f7ff;
+  background: transparent;
+}
+.historyDetailModal .ant-modal-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, .07);
+}
+.historyDetailModal .ant-modal-footer {
+  padding-top: 14px;
+  border-top: 1px solid rgba(125, 160, 255, .14);
+}
+.historyDetail {
+  max-height: 68vh;
+  display: grid;
+  gap: 18px;
+  overflow: auto;
+  padding-right: 6px;
+}
+.historyDetailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.historyDetailMeta span {
+  padding: 6px 9px;
+  border: 1px solid rgba(125, 160, 255, .14);
+  border-radius: 8px;
+  color: #9fb1d5;
+  background: rgba(255, 255, 255, .035);
+}
+.historyDetail h4 {
+  margin: 0 0 9px;
+  color: #f3f7ff;
+}
+.historyDetail pre {
+  max-height: 320px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid rgba(125, 160, 255, .12);
+  border-radius: 8px;
+  color: #c8d8f4;
+  background: rgba(2, 6, 18, .58);
+  font: 12px/1.65 "SFMono-Regular", Consolas, monospace;
+}
+.historyAnalysisBlock {
+  padding: 12px 14px;
+  border-left: 2px solid #26c9f3;
+  background: rgba(38, 201, 243, .05);
+}
+.historyAnalysisBlock + .historyAnalysisBlock { margin-top: 10px; }
+.historyAnalysisBlock strong { color: #f3f7ff; }
+.historyAnalysisBlock p {
+  margin: 7px 0 0;
+  color: #b9c7e4;
+  line-height: 1.6;
+}
+.historyDetailModal.theme-light .ant-modal-content { background: #fff; }
+.historyDetailModal.theme-light .ant-modal-header,
+.historyDetailModal.theme-light .ant-modal-footer { border-color: rgba(83, 105, 160, .16); }
+.historyDetailModal.theme-light .ant-modal-title,
+.historyDetailModal.theme-light .ant-modal-close,
+.historyDetailModal.theme-light .historyDetail h4,
+.historyDetailModal.theme-light .historyAnalysisBlock strong { color: #162033; }
+.historyDetailModal.theme-light .ant-modal-close:hover { background: rgba(83, 105, 160, .08); }
+.historyDetailModal.theme-light .historyDetail pre {
+  color: #33415f;
+  background: #f5f8ff;
+}
+/* 设置页面 */
 .settingsLayout {
   display: grid;
   grid-template-columns: minmax(600px, 780px) 340px;
@@ -1204,6 +1420,22 @@ nav { display: grid; gap: 8px; }
   background: rgba(255, 255, 255, .035);
   font-size: 12px;
 }
+.historyTools .ant-segmented {
+  padding: 4px;
+  background: rgba(8, 15, 35, .72);
+}
+.historyTools .ant-segmented-item { color: #9fb1d5; }
+.historyTools .ant-segmented-item-selected {
+  color: #f6fbff;
+  background: rgba(99, 102, 241, .34);
+  box-shadow: inset 0 0 0 1px rgba(63, 210, 255, .22);
+}
+.theme-light .historyTools .ant-segmented { background: #edf2fb; }
+.theme-light .historyTools .ant-segmented-item { color: #536482; }
+.theme-light .historyTools .ant-segmented-item-selected {
+  color: #17213a;
+  background: #fff;
+}
 .shortcutList {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -1222,6 +1454,7 @@ nav { display: grid; gap: 8px; }
   text-align: center;
   font-family: "SFMono-Regular", Consolas, monospace;
 }
+/* Ant Design 组件的项目级主题覆盖 */
 .ant-btn, .ant-select-selector, .ant-input-affix-wrapper, .ant-segmented {
   border-color: rgba(125, 160, 255, .18) !important;
   background: rgba(255, 255, 255, .045) !important;

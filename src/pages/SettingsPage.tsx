@@ -1,9 +1,12 @@
+/** 设置页：所有控件直接读写 Zustand，并由 persist 自动保存到 localStorage。 */
 import { SettingOutlined } from "@ant-design/icons";
 import { Segmented, Slider, Switch, Tag } from "antd";
-import { ThemeMode, usePlaygroundStore } from "../store/playgroundStore";
+import type { ThemeMode } from "../store/playgroundStore";
+import { usePlaygroundStore } from "../store/playgroundStore";
 import { ShellHeader } from "../components/ShellHeader";
 
 export function SettingsPage() {
+  // 这些都是受控组件：value/checked 来自 store，onChange 再把新值写回 store。
   const {
     model,
     theme,
@@ -20,6 +23,7 @@ export function SettingsPage() {
     setAnimation,
   } = usePlaygroundStore();
   const apiConfigured = Boolean(import.meta.env.VITE_GLM_API_KEY);
+  // Boolean 将字符串或 undefined 转成明确的 true/false，方便 JSX 判断。
 
   return (
     <main className="content">
@@ -36,6 +40,7 @@ export function SettingsPage() {
               <span>切换整体背景、卡片、文字和代码编辑器主题</span>
             </div>
             <Segmented
+              // value 决定当前选中项，onChange 把用户操作写回 store。
               value={theme}
               onChange={(value) => setTheme(value as ThemeMode)}
               options={[
@@ -71,6 +76,7 @@ export function SettingsPage() {
               <span>长代码行会在编辑器宽度内折行，减少横向滚动</span>
             </div>
             <Switch checked={wordWrap} onChange={setWordWrap} />
+            {/* Switch 的 checked 是布尔值，和普通 input 的 value 用法不同。 */}
           </div>
           <div className="settingRow">
             <div>

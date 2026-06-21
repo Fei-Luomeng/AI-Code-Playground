@@ -1,3 +1,4 @@
+/** 展示 AI 返回的逐行代码标记，与 Monaco 中的行高亮使用同一份数据。 */
 import { AimOutlined } from "@ant-design/icons";
 import { usePlaygroundStore } from "../store/playgroundStore";
 
@@ -12,6 +13,7 @@ export function CodeMarkersPanel() {
         <span className="muted">execution notes</span>
       </div>
       {codeMarkers.length ? (
+        // marker.type 同时参与 className，使不同类型拥有不同颜色。
         <div className="markerList">
           {codeMarkers.map((marker) => (
             <article key={`${marker.type}-${marker.line}-${marker.title}`} className={`markerItem ${marker.type}`}>

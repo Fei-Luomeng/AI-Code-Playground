@@ -9,8 +9,9 @@ import {
   SettingOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
-import type { IconKey } from "../data/mockData";
+import type { IconKey } from "../data/appConfig";
 
+// Record<IconKey, JSX.Element> 保证配置里出现的每种图标名称都有对应组件。
 export const iconMap: Record<IconKey, JSX.Element> = {
   api: <ApiOutlined />,
   app: <AppstoreOutlined />,

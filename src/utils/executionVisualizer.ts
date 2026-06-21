@@ -1,6 +1,11 @@
+/**
+ * 教学型执行流程解析器。
+ * 输入是源码与真实 console 输出，返回 React Flow 和 ECharts 可以直接消费的数据。
+ */
 import type { Edge, Node } from "react-flow-renderer";
 
 type StepType = "sync" | "function" | "call" | "micro" | "macro" | "output" | "dom" | "network" | "branch" | "return";
+// StepType 同时决定节点文字、颜色和时间线分类。
 
 export type VisualStep = {
   id: string;
@@ -26,6 +31,7 @@ export type TraceItem = {
 };
 
 export type ExecutionVisualization = {
+  // 一个解析结果服务于页面上的五个不同区域。
   nodes: Node[];
   edges: Edge[];
   steps: VisualStep[];
@@ -35,6 +41,7 @@ export type ExecutionVisualization = {
 };
 
 type CodeLine = {
+  // line 保存原始行号；text 是去除首尾空白后的源码；owner 表示所属函数。
   line: number;
   text: string;
   owner: string;
@@ -48,6 +55,7 @@ type FunctionInfo = {
 };
 
 type ExecutionAction = CodeLine & {
+  // & 表示交叉类型：ExecutionAction 包含 CodeLine 的全部字段以及下面新增字段。
   id: string;
   title: string;
   detail: string;
@@ -56,6 +64,7 @@ type ExecutionAction = CodeLine & {
 };
 
 const IGNORED_CALLS = new Set(["if", "for", "while", "switch", "catch", "return", "console", "Promise", "setTimeout", "setInterval"]);
+// Set 的 has 查询适合快速排除“看起来像函数调用但其实是语法关键字”的名称。
 
 type ScheduledTask = {
   actions: ExecutionAction[];
@@ -64,34 +73,38 @@ type ScheduledTask = {
 };
 
 export function createExecutionVisualization(code: string, output: string[]): ExecutionVisualization {
+  // 先推导源码中的执行动作，再把 iframe 的真实输出按顺序合并进去。
+  // 这里是教学可视化解析器，并不是浏览器引擎级别的指令追踪器。
   const rawLines = getUsefulLines(code);
   const functions = collectFunctions(rawLines);
   const lines = attachFunctionOwner(rawLines, functions);
   const actions = buildExecutionActions(lines, functions);
   const outputItems = getOutputItems(output);
-  const outputActions = outputItems.map<ExecutionAction>((item, index) => ({
-    id: `output-${index}`,
-    line: index + 1,
-    text: item,
-    owner: "console",
-    title: `输出 ${index + 1}`,
-    detail: item,
-    type: "output",
-    phase: "output",
-  }));
-  const allActions = [...actions, ...outputActions];
+  const visualActions = attachRuntimeOutputs(actions, outputItems);
 
   return {
-    nodes: buildNodes(allActions, lines.length),
-    edges: buildEdges(allActions),
-    steps: buildSteps(allActions, functions, outputItems.length),
-    queueCards: buildQueueCards(allActions, functions),
-    timeline: buildTimeline(allActions),
-    trace: allActions.slice(0, 6).map((action) => ({ label: action.title, type: action.type })),
+    nodes: buildNodes(visualActions, lines.length, outputItems.length),
+    edges: buildEdges(visualActions),
+    steps: buildSteps(visualActions, functions, outputItems.length),
+    queueCards: buildQueueCards(visualActions, functions, outputItems),
+    timeline: buildTimeline(visualActions, outputItems),
+    trace: buildTrace(visualActions, outputItems),
   };
 }
 
+function attachRuntimeOutputs(actions: ExecutionAction[], outputItems: string[]) {
+  // 不重新创建执行顺序，只把真实输出补充到对应 console 动作的详情中。
+  let outputIndex = 0;
+  return actions.map((action) => {
+    if (!isConsoleLine(action.text) || outputIndex >= outputItems.length) return action;
+    const runtimeOutput = formatRuntimeOutput(outputItems[outputIndex]);
+    outputIndex += 1;
+    return { ...action, detail: `${action.detail} 真实输出：${runtimeOutput}` };
+  });
+}
+
 function getUsefulLines(code: string): CodeLine[] {
+  // 保留真实行号，但过滤空行和整行注释，减少后续扫描噪音。
   return code
     .split("\n")
     .map((line, index) => ({ line: index + 1, text: line.trim(), owner: "全局" }))
@@ -99,6 +112,7 @@ function getUsefulLines(code: string): CodeLine[] {
 }
 
 function collectFunctions(lines: CodeLine[]): FunctionInfo[] {
+  // 扫描普通函数和箭头函数，并用花括号深度估算函数结束行。
   const functions: FunctionInfo[] = [];
 
   lines.forEach((item, index) => {
@@ -122,6 +136,7 @@ function collectFunctions(lines: CodeLine[]): FunctionInfo[] {
 }
 
 function attachFunctionOwner(lines: CodeLine[], functions: FunctionInfo[]) {
+  // 给函数体内每一行标记 owner，后面生成“某函数内部执行”说明。
   return lines.map((line) => {
     const owner = functions.find((item) => line.line > item.startLine && line.line <= item.endLine)?.name ?? "全局";
     return { ...line, owner };
@@ -129,11 +144,13 @@ function attachFunctionOwner(lines: CodeLine[], functions: FunctionInfo[]) {
 }
 
 function buildExecutionActions(lines: CodeLine[], functions: FunctionInfo[]) {
+  // 用数组模拟事件循环中的同步流程、微任务队列和宏任务队列。
   const actions: ExecutionAction[] = [];
   const microQueue: ScheduledTask[] = [];
   const macroQueue: ExecutionAction[] = [];
 
   for (let index = 0; index < lines.length; index += 1) {
+    // for 而不是 forEach，是因为识别到回调块后需要主动跳过若干行。
     const line = lines[index];
     if (/^\s*[});]+$/.test(line.text)) continue;
     if (line.owner !== "全局") continue;
@@ -145,23 +162,31 @@ function buildExecutionActions(lines: CodeLine[], functions: FunctionInfo[]) {
     }
 
     if (isMacroTask(line.text)) {
-      macroQueue.push(...extractCallbackOutputs(lines, index, "macro", "宏任务输出"));
+      // 注册时先进入宏任务队列，回调体不能在这里按同步代码重复处理。
+      const blockEnd = findBlockEnd(lines, index);
+      macroQueue.push(...extractCallbackOutputs(lines, index, "macro", "异步宏任务执行并输出"));
+      index = blockEnd;
       continue;
     }
 
     if (isPromiseChainStart(line.text)) {
+      // Promise.then 回调按照链式关系放入微任务队列。
       const promiseTasks = extractPromiseChainTasks(lines, index);
       if (promiseTasks.length) microQueue.push(promiseTasks[0]);
+      index = findChainEnd(lines, index);
       continue;
     }
 
     if (/queueMicrotask\s*\(/.test(line.text)) {
-      microQueue.push({ actions: extractCallbackOutputs(lines, index, "micro", "queueMicrotask 输出") });
+      const blockEnd = findBlockEnd(lines, index);
+      microQueue.push({ actions: extractCallbackOutputs(lines, index, "micro", "异步微任务执行并输出") });
+      index = blockEnd;
       continue;
     }
 
     const calledFunction = getCalledFunction(line.text, functions);
     if (calledFunction) {
+      // 函数声明与函数调用是两件事；只有找到调用才展开函数体动作。
       actions.push(createAction(line, "call", "sync", null, calledFunction.name));
 
       if (calledFunction.async) {
@@ -193,6 +218,7 @@ function buildExecutionActions(lines: CodeLine[], functions: FunctionInfo[]) {
 }
 
 function drainMicroQueue(queue: ScheduledTask[], macroQueue: ExecutionAction[]) {
+  // 微任务按先进先出执行；执行微任务时还可能继续追加微任务或宏任务。
   const actions: ExecutionAction[] = [];
 
   while (queue.length) {
@@ -207,6 +233,7 @@ function drainMicroQueue(queue: ScheduledTask[], macroQueue: ExecutionAction[]) 
 }
 
 function getStepType(text: string, declaredFunction: string | null, callName: string | null): StepType {
+  // 按更具体到更普通的顺序匹配，最后无法识别的语句归为 sync。
   if (declaredFunction) return "function";
   if (callName) return "call";
   if (/\.then\s*\(|\.catch\s*\(|\.finally\s*\(|queueMicrotask\s*\(|await\s+|Promise\./.test(text)) return "micro";
@@ -224,8 +251,8 @@ function getActionTitle(line: CodeLine, type: StepType, declaredFunction: string
 
   if (declaredFunction) return `L${line.line} 声明函数 ${declaredFunction}`;
   if (callName) return `L${line.line} 调用函数 ${callName}`;
-  if (type === "micro") return `L${line.line} ${ownerPrefix}加入微任务`;
-  if (type === "macro") return `L${line.line} ${ownerPrefix}注册宏任务`;
+  if (type === "micro") return isConsoleLine(line.text) ? `L${line.line} ${ownerPrefix}执行异步微任务并输出` : `L${line.line} ${ownerPrefix}加入异步微任务`;
+  if (type === "macro") return isConsoleLine(line.text) ? `L${line.line} ${ownerPrefix}执行异步宏任务并输出` : `L${line.line} ${ownerPrefix}注册异步宏任务`;
   if (type === "network") return `L${line.line} ${ownerPrefix}发起请求`;
   if (type === "dom") return `L${line.line} ${ownerPrefix}操作浏览器对象`;
   if (type === "branch") return `L${line.line} ${ownerPrefix}判断分支`;
@@ -253,6 +280,7 @@ function getActionDetail(line: CodeLine, type: StepType, declaredFunction: strin
 }
 
 function createAction(line: CodeLine, type: StepType, phase: ExecutionAction["phase"], declaredFunction: string | null, callName: string | null): ExecutionAction {
+  // 所有动作都从这里创建，保证 id、标题和详情格式统一。
   return {
     ...line,
     id: `line-${line.line}-${phase}-${type}`,
@@ -264,6 +292,7 @@ function createAction(line: CodeLine, type: StepType, phase: ExecutionAction["ph
 }
 
 function buildSteps(actions: ExecutionAction[], functions: FunctionInfo[], outputCount: number): VisualStep[] {
+  // 右侧步骤栏除了具体动作，还会增加开头概览和结尾输出总结。
   if (!actions.length) {
     return [
       {
@@ -304,20 +333,21 @@ function buildSteps(actions: ExecutionAction[], functions: FunctionInfo[], outpu
   ];
 }
 
-function buildNodes(actions: ExecutionAction[], lineCount: number): Node[] {
+function buildNodes(actions: ExecutionAction[], lineCount: number, runtimeOutputCount: number): Node[] {
+  // 为避免大文件把画布撑爆，流程图最多展示前八个主要动作。
   const visibleActions = actions.filter((item) => item.phase !== "output").slice(0, 8);
   const nodes: Node[] = [
     makeNode("source", 20, 170, `当前代码\n${lineCount} 行`, "source"),
     ...visibleActions.map((action, index) => makeNode(action.id, 250 + (index % 4) * 220, index < 4 ? 70 : 270, nodeLabel(action, index), action.type)),
   ];
 
-  const outputCount = actions.filter((item) => item.phase === "output").length;
-  nodes.push(makeNode("console", 1140, 170, `控制台输出\n${outputCount} 条`, "output"));
+  nodes.push(makeNode("console", 1140, 170, `控制台输出\n${runtimeOutputCount} 条`, "output"));
 
   return nodes;
 }
 
 function buildEdges(actions: ExecutionAction[]): Edge[] {
+  // 边把源码入口、动作节点和控制台按执行顺序连接起来。
   const visibleActions = actions.filter((item) => item.phase !== "output").slice(0, 8);
   const edges: Edge[] = [];
 
@@ -333,26 +363,59 @@ function buildEdges(actions: ExecutionAction[]): Edge[] {
   return edges;
 }
 
-function buildQueueCards(actions: ExecutionAction[], functions: FunctionInfo[]): QueueCard[] {
+function buildQueueCards(actions: ExecutionAction[], functions: FunctionInfo[], outputItems: string[]): QueueCard[] {
+  // 同一批 action 按 phase 分类后，分别填入调用栈、微任务和宏任务卡片。
   const callStack = actions.filter((item) => item.phase === "sync" && item.type !== "function");
   const microItems = actions.filter((item) => item.phase === "micro");
   const macroItems = actions.filter((item) => item.phase === "macro");
-  const outputItems = actions.filter((item) => item.phase === "output");
 
   return [
     { title: "函数声明", items: formatFunctions(functions), active: functions.length ? 0 : -1 },
     { title: "Call Stack", items: formatActions(callStack, "暂无同步调用"), active: callStack.length ? 0 : -1 },
     { title: "Microtask Queue", items: formatActions(microItems, "暂无微任务"), active: microItems.length ? 0 : -1 },
     { title: "Macrotask Queue", items: formatActions(macroItems, "暂无宏任务"), active: macroItems.length ? 0 : -1 },
-    { title: "Console Output", items: outputItems.length ? outputItems.map((item) => item.detail) : ["点击解释代码后显示输出"], active: outputItems.length ? outputItems.length - 1 : -1 },
+    { title: "Console Output", items: outputItems.length ? outputItems.map(formatRuntimeOutput) : ["点击解释代码后显示输出"], active: outputItems.length ? outputItems.length - 1 : -1 },
   ];
 }
 
-function buildTimeline(actions: ExecutionAction[]): TimelinePoint[] {
+function buildTimeline(actions: ExecutionAction[], outputItems: string[]): TimelinePoint[] {
+  // 运行后以真实输出数量为准；尚未运行时才展示静态推导动作。
+  if (outputItems.length) {
+    const consoleActions = actions.filter((action) => isConsoleLine(action.text));
+    return outputItems.map((_, index) => {
+      const action = consoleActions[index];
+      return {
+        label: `${index + 1} ${action ? getPhaseLabel(action.phase) : "输出"}`,
+        value: index + 1,
+      };
+    });
+  }
+
   return actions.slice(0, 13).map((action, index) => ({
     label: `${index + 1} ${getShortType(action.type)}`,
     value: getTimelineValue(action, index),
   }));
+}
+
+function buildTrace(actions: ExecutionAction[], outputItems: string[]): TraceItem[] {
+  // 执行轨迹优先展示真实 console 顺序，并附带推导出的同步/异步分类。
+  if (!outputItems.length) return actions.slice(0, 6).map((action) => ({ label: action.title, type: action.type }));
+
+  const consoleActions = actions.filter((action) => isConsoleLine(action.text));
+  return outputItems.slice(0, 12).map((item, index) => {
+    const action = consoleActions[index];
+    return {
+      label: `${action ? getPhaseLabel(action.phase) : "输出"}：${formatRuntimeOutput(item)}`,
+      type: action?.type ?? "output",
+    };
+  });
+}
+
+function getPhaseLabel(phase: ExecutionAction["phase"]) {
+  if (phase === "micro") return "异步·微任务";
+  if (phase === "macro") return "异步·宏任务";
+  if (phase === "sync") return "同步";
+  return "输出";
 }
 
 function getTimelineValue(action: ExecutionAction, index: number) {
@@ -361,6 +424,7 @@ function getTimelineValue(action: ExecutionAction, index: number) {
 }
 
 function makeNode(id: string, x: number, y: number, label: string, className: string): Node {
+  // React Flow 的节点本质是包含 id、坐标和 data 的普通对象。
   return {
     id,
     position: { x, y },
@@ -370,6 +434,7 @@ function makeNode(id: string, x: number, y: number, label: string, className: st
 }
 
 function makeEdge(source: string, target: string, animated = false): Edge {
+  // source/target 必须引用已存在的节点 id。
   return {
     id: `${source}-${target}`,
     source,
@@ -432,15 +497,21 @@ function getFunctionName(text: string) {
 }
 
 function getCalledFunction(text: string, functions: FunctionInfo[]) {
+  // matchAll 可能找出一行中的多个调用，再与已声明函数列表做交集。
   const calls = [...text.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)].map((match) => match[1]);
   const name = calls.find((item) => functions.some((fn) => fn.name === item) && !IGNORED_CALLS.has(item));
   return name ? functions.find((item) => item.name === name) ?? null : null;
 }
 
 function getOutputItems(output: string[]) {
+  // runtime 和 AI 状态是控制台附加信息，不属于用户代码的真实 console 输出。
   return output
-    .filter((item) => !/^runtime\s+/.test(item) && !/^AI 解释\s+/.test(item) && !/^待执行/.test(item) && !/^已删除/.test(item) && !/^(Opened|Loaded)\s+/.test(item))
-    .slice(0, 5);
+    .filter((item) => !/^runtime\s+/.test(item) && !/^AI 解释\s+/.test(item) && !/^待执行/.test(item) && !/^已删除/.test(item) && !/^代码已执行，无 console 输出/.test(item) && !/^(Opened|Loaded)\s+/.test(item))
+    .slice(0, 20);
+}
+
+function formatRuntimeOutput(output: string) {
+  return output.replace(/^console\.(?:log|error|warn|info)\s+/, "").replace(/^Error\s+/, "错误：");
 }
 
 function countChar(input: string, char: string) {
@@ -524,7 +595,7 @@ function buildAsyncFunctionSchedule(lines: CodeLine[], fn: FunctionInfo) {
   segments.push(currentSegment);
 
   const microTasks = segments
-    .map((segment) => {
+    .map<ScheduledTask | null>((segment) => {
       const macroRanges = getMacroRanges(segment);
       const actions = segment
         .filter((line, index) => isConsoleLine(line.text) && !isIndexInRanges(index, macroRanges))
@@ -532,7 +603,7 @@ function buildAsyncFunctionSchedule(lines: CodeLine[], fn: FunctionInfo) {
       const macros = macroRanges.flatMap((range) => extractCallbackOutputs(segment, range.start, "macro", `${fn.name} 内宏任务输出`));
       return actions.length || macros.length ? { actions, macros } : null;
     })
-    .filter((task): task is ScheduledTask => Boolean(task));
+    .filter((task): task is ScheduledTask => task !== null);
 
   microTasks.forEach((task, index) => {
     const nextTask = microTasks[index + 1];
@@ -549,6 +620,7 @@ function extractFunctionBodyActions(lines: CodeLine[], fn: FunctionInfo, phase: 
 }
 
 function findBlockEnd(lines: CodeLine[], startIndex: number) {
+  // 通过花括号计数找到 setTimeout、函数等代码块的结束位置。
   let depth = 0;
 
   for (let index = startIndex; index < lines.length; index += 1) {
@@ -561,17 +633,25 @@ function findBlockEnd(lines: CodeLine[], startIndex: number) {
 }
 
 function findChainEnd(lines: CodeLine[], startIndex: number) {
+  // Promise 链可能跨越多行，通过括号深度判断链何时真正结束。
   let endIndex = startIndex;
+  let depth = getDelimiterDepth(lines[startIndex].text);
 
   for (let index = startIndex + 1; index < lines.length; index += 1) {
     const text = lines[index].text;
-    if (getFunctionName(text) || (/^[A-Za-z_$][\w$]*\s*\(/.test(text) && !text.startsWith("."))) break;
-    if (isMacroTask(text) || /queueMicrotask\s*\(/.test(text)) break;
+    if (depth <= 0 && !text.startsWith(".")) break;
     endIndex = index;
+    depth += getDelimiterDepth(text);
     if (index - startIndex > 14) break;
   }
 
   return endIndex;
+}
+
+function getDelimiterDepth(text: string) {
+  // 同时统计圆括号、花括号和方括号，支持多行 Promise 回调。
+  return countChar(text, "(") + countChar(text, "{") + countChar(text, "[")
+    - countChar(text, ")") - countChar(text, "}") - countChar(text, "]");
 }
 
 function getMacroRanges(lines: CodeLine[]) {
